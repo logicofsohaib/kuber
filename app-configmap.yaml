@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mymicro-config
+  namespace: mymicro
+data:
+  USER_SERVICE_PORT: "3003"
+  PRODUCT_SERVICE_PORT: "3001"
+  ORDER_SERVICE_PORT: "3002"

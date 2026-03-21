@@ -1,0 +1,61 @@
+{{- range $name, $svc := .Values.services }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  replicas: {{ $svc.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ $svc.image.repository }}:{{ $svc.image.tag }}"
+          imagePullPolicy: {{ $svc.image.pullPolicy }}
+          ports:
+            - containerPort: {{ $svc.service.targetPort }}
+          {{- if $svc.env }}
+          env:
+            - name: PORT
+              value: {{ $svc.env.PORT | quote }}
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mymicro-secret
+                  key: {{ $svc.env.MONGO_URI_SECRET }}
+          {{- end }}
+          {{- if $svc.probes }}
+          readinessProbe:
+            httpGet:
+              path: {{ $svc.probes.readiness.path }}
+              port: {{ $svc.service.targetPort }}
+            initialDelaySeconds: {{ $svc.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ $svc.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ $svc.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ $svc.probes.readiness.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ $svc.probes.liveness.path }}
+              port: {{ $svc.service.targetPort }}
+            initialDelaySeconds: {{ $svc.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ $svc.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ $svc.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ $svc.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if $svc.resources }}
+          resources:
+            requests:
+              cpu: {{ $svc.resources.requests.cpu | quote }}
+              memory: {{ $svc.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ $svc.resources.limits.cpu | quote }}
+              memory: {{ $svc.resources.limits.memory | quote }}
+          {{- end }}
+---
+{{- end }}

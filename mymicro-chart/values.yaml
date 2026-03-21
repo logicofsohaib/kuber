@@ -1,0 +1,180 @@
+namespace: mymicro
+
+services:
+  frontend:
+    replicaCount: 2
+    image:
+      repository: sohaib22/mymicro-frontend
+      tag: latest
+      pullPolicy: Always
+    service:
+      port: 80
+      targetPort: 80
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        cpu: "200m"
+        memory: "128Mi"
+    probes:
+      readiness:
+        path: /
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+      liveness:
+        path: /
+        initialDelaySeconds: 20
+        periodSeconds: 15
+        timeoutSeconds: 5
+        failureThreshold: 3
+
+  user-service:
+    replicaCount: 1
+    image:
+      repository: sohaib22/mymicro-user-service
+      tag: latest
+      pullPolicy: Always
+    service:
+      port: 3003
+      targetPort: 3003
+    env:
+      PORT: "3003"
+      MONGO_URI_SECRET: USER_MONGO_URI
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "300m"
+        memory: "256Mi"
+    probes:
+      readiness:
+        path: /health
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+      liveness:
+        path: /health
+        initialDelaySeconds: 30
+        periodSeconds: 15
+        timeoutSeconds: 5
+        failureThreshold: 3
+
+  product-service:
+    replicaCount: 1
+    image:
+      repository: sohaib22/mymicro-product-service
+      tag: latest
+      pullPolicy: Always
+    service:
+      port: 3001
+      targetPort: 3001
+    env:
+      PORT: "3001"
+      MONGO_URI_SECRET: PRODUCT_MONGO_URI
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "300m"
+        memory: "256Mi"
+    probes:
+      readiness:
+        path: /health
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+      liveness:
+        path: /health
+        initialDelaySeconds: 30
+        periodSeconds: 15
+        timeoutSeconds: 5
+        failureThreshold: 3
+
+  order-service:
+    replicaCount: 1
+    image:
+      repository: sohaib22/mymicro-order-service
+      tag: latest
+      pullPolicy: Always
+    service:
+      port: 3002
+      targetPort: 3002
+    env:
+      PORT: "3002"
+      MONGO_URI_SECRET: ORDER_MONGO_URI
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "300m"
+        memory: "256Mi"
+    probes:
+      readiness:
+        path: /health
+        initialDelaySeconds: 20
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 6
+      liveness:
+        path: /health
+        initialDelaySeconds: 35
+        periodSeconds: 15
+        timeoutSeconds: 5
+        failureThreshold: 3
+
+mongo:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: mongo
+    tag: "6.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 27017
+    targetPort: 27017
+  storage:
+    enabled: true
+    size: 1Gi
+    storageClassName: ""
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
+secret:
+  userMongoUri: mongodb://mongo:27017/users
+  productMongoUri: mongodb://mongo:27017/products
+  orderMongoUri: mongodb://mongo:27017/orders
+
+ingress:
+  enabled: true
+  className: nginx
+  host: mymicro.local
+  annotations: {}
+
+hpa:
+  enabled: true
+  services:
+    user-service:
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 70
+    product-service:
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 70
+    order-service:
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 70

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mymicro-limits
+  namespace: mymicro
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: "300m"
+        memory: "256Mi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "128Mi"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mymicro-quota
+  namespace: mymicro
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    pods: "15"
+    services: "10"
+    persistentvolumeclaims: "5"
