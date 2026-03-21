@@ -8,10 +8,18 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Debug repo files
+        run: |
+          pwd
+          ls -la
+          find . -maxdepth 2 -type f | sort
 
       - name: Check cluster
         run: |
