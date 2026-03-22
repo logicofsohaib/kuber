@@ -46,6 +46,9 @@ spec:
         - podSelector:
             matchLabels:
               app: frontend
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
       ports:
         - protocol: TCP
           port: 3003
@@ -70,6 +73,9 @@ spec:
         - podSelector:
             matchLabels:
               app: order-service
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
       ports:
         - protocol: TCP
           port: 3001
@@ -91,6 +97,9 @@ spec:
         - podSelector:
             matchLabels:
               app: frontend
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
       ports:
         - protocol: TCP
           port: 3002
