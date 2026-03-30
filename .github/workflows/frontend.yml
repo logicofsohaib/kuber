@@ -1,0 +1,32 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build & Push Image
+        run: |
+          docker build -t sohaib22/mymicro-frontend:${{ github.sha }} ./frontend
+          docker push sohaib22/mymicro-frontend:${{ github.sha }}
+
+      - name: Update Deployment
+        run: |
+          kubectl set image deployment/frontend frontend=sohaib22/mymicro-frontend:${{ github.sha }} -n mymicro
+
+      - name: Verify
+        run: kubectl rollout status deployment/frontend -n mymicro

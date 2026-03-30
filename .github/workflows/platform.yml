@@ -1,0 +1,53 @@
+name: Deploy Platform
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - app-configmap.yaml
+      - app-secret.yaml
+      - ingress.yaml
+      - hpa.yaml
+      - quota.yaml
+      - networkpolicy.yaml
+      - mongo-persistent.yaml
+      - .github/workflows/platform.yml
+
+  workflow_dispatch:
+
+jobs:
+  deploy-platform:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check cluster
+        run: |
+          kubectl get nodes
+          kubectl get ns
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace mymicro --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Delete mongo service if needed
+        run: |
+          kubectl delete svc mongo -n mymicro --ignore-not-found=true
+
+      - name: Apply platform files
+        run: |
+          kubectl apply -f app-configmap.yaml -n mymicro
+          kubectl apply -f app-secret.yaml -n mymicro
+          kubectl apply -f quota.yaml -n mymicro
+          kubectl apply -f networkpolicy.yaml -n mymicro
+          kubectl apply -f mongo-persistent.yaml -n mymicro
+          kubectl apply -f ingress.yaml -n mymicro
+          kubectl apply -f hpa.yaml -n mymicro
+
+      - name: Verify
+        run: |
+          kubectl get all -n mymicro
+          kubectl get ingress -n mymicro
