@@ -1,4 +1,4 @@
-name: Deploy Platform
+name: Deploy Platform & Apps
 
 on:
   push:
@@ -12,8 +12,8 @@ on:
       - quota.yaml
       - networkpolicy.yaml
       - mongo-persistent.yaml
+      - apps.yaml
       - .github/workflows/platform.yml
-
   workflow_dispatch:
 
 jobs:
@@ -33,6 +33,9 @@ jobs:
         run: |
           kubectl create namespace mymicro --dry-run=client -o yaml | kubectl apply -f -
 
+      - name: Enable metrics-server (for HPA)
+        run: minikube addons enable metrics-server
+
       - name: Delete mongo service if needed
         run: |
           kubectl delete svc mongo -n mymicro --ignore-not-found=true
@@ -47,7 +50,16 @@ jobs:
           kubectl apply -f ingress.yaml -n mymicro
           kubectl apply -f hpa.yaml -n mymicro
 
-      - name: Verify
+      - name: Deploy app deployments & services
         run: |
-          kubectl get all -n mymicro
+          kubectl apply -f apps.yaml -n mymicro
+          kubectl rollout status deployment/user-service -n mymicro --timeout=180s
+          kubectl rollout status deployment/product-service -n mymicro --timeout=180s
+          kubectl rollout status deployment/order-service -n mymicro --timeout=180s
+          kubectl rollout status deployment/frontend -n mymicro --timeout=180s
+
+      - name: Verify deployments
+        run: |
+          kubectl get pods,svc -n mymicro
           kubectl get ingress -n mymicro
+          kubectl get hpa -n mymicro
